@@ -1,0 +1,46 @@
+======================================================================
+ADAS ENHANCED SYSTEM - VIDEO PROCESSING REPORT
+======================================================================
+
+Processing Date: 2025-11-16 17:54:13
+Input Video: test_video.mp4
+Output Directory: demo_output
+
+VIDEO STATISTICS
+----------------------------------------------------------------------
+Total Frames: 825
+Processed Frames: 825
+Skipped Frames: 0
+Total Processing Time: 100.67 seconds
+Average FPS: 8.19
+
+DETECTION STATISTICS
+----------------------------------------------------------------------
+Total Detections: 2304
+Average Detections per Frame: 2.79
+
+WARNING STATISTICS
+----------------------------------------------------------------------
+SAFE Frames: 708
+WARNING Frames: 103
+CRITICAL Frames: 14
+
+SYSTEM CONFIGURATION
+----------------------------------------------------------------------
+Lane Detection Model: DL + CV Fallback
+Object Detection Model: YOLOv8n
+Distance Estimation: Uncalibrated (Normalized)
+Overlay Rendering: Advanced with Animations
+BEV Transformation: Enabled
+
+FEATURES ENABLED
+----------------------------------------------------------------------
+[OK] Forward Collision Warning System (FCWS)
+[OK] Lane Departure Warning System (LDWS)
+[OK] Lane Keeping Assistance System (LKAS)
+[OK] Enhanced Distance Estimation
+[OK] Advanced Overlay Rendering
+[OK] Animation Engine
+[OK] Bird's Eye View Transformation
+
+======================================================================

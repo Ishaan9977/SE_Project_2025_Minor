@@ -10,6 +10,7 @@ import time
 from flask import Flask, render_template, Response, jsonify, request
 from werkzeug.utils import secure_filename
 from main import ADASSystem
+from utils.config_loader import ConfigLoader
 
 app = Flask(__name__)
 app.config['UPLOAD_FOLDER'] = 'uploads'
@@ -25,6 +26,9 @@ video_capture = None
 current_video_path = None
 processing_active = False
 frame_lock = threading.Lock()
+
+# Configuration loader
+config_loader = ConfigLoader()
 
 def allowed_file(filename):
     """Check if file extension is allowed"""
@@ -214,6 +218,71 @@ def update_settings():
             adas_system.lkas.assist_threshold = float(data['lkas_threshold'])
         
         return jsonify({'status': 'success', 'message': 'Settings updated'})
+    
+    except Exception as e:
+        return jsonify({'status': 'error', 'message': str(e)}), 500
+
+
+@app.route('/api/config', methods=['GET'])
+def get_config():
+    """Get current configuration"""
+    global config_loader
+    
+    try:
+        return jsonify({
+            'status': 'success',
+            'config': config_loader.config
+        })
+    except Exception as e:
+        return jsonify({'status': 'error', 'message': str(e)}), 500
+
+
+@app.route('/api/config/update', methods=['POST'])
+def update_config():
+    """Update configuration with runtime changes"""
+    global config_loader, adas_system
+    
+    try:
+        data = request.get_json()
+        
+        if not data:
+            return jsonify({'status': 'error', 'message': 'No data provided'}), 400
+        
+        # Update configuration
+        config_loader.update_from_dict(data)
+        
+        # Save configuration to file
+        config_loader.save()
+        
+        # Apply changes to ADAS system if initialized
+        if adas_system is not None:
+            # Update model confidence thresholds
+            if 'models.lane_detection.confidence_threshold' in data:
+                # Will be applied when DL lane detector is implemented
+                pass
+            
+            if 'models.object_detection.confidence_threshold' in data:
+                adas_system.object_detector.conf_threshold = data['models.object_detection.confidence_threshold']
+            
+            # Update FCWS settings
+            if 'fcws.warning_distance' in data:
+                adas_system.fcws.warning_distance = data['fcws.warning_distance']
+            if 'fcws.critical_distance' in data:
+                adas_system.fcws.critical_distance = data['fcws.critical_distance']
+            
+            # Update LDWS settings
+            if 'ldws.departure_threshold' in data:
+                adas_system.ldws.departure_threshold = data['ldws.departure_threshold']
+            
+            # Update LKAS settings
+            if 'lkas.assist_threshold' in data:
+                adas_system.lkas.assist_threshold = data['lkas.assist_threshold']
+        
+        return jsonify({
+            'status': 'success',
+            'message': 'Configuration updated',
+            'updated_keys': list(data.keys())
+        })
     
     except Exception as e:
         return jsonify({'status': 'error', 'message': str(e)}), 500

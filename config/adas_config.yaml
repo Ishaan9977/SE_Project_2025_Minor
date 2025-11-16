@@ -1,0 +1,62 @@
+# ADAS Enhanced System Configuration
+
+models:
+  lane_detection:
+    enabled: true
+    model_path: "models/ultra_fast_lane.onnx"
+    model_type: "onnx"  # onnx, pytorch, tensorflow
+    confidence_threshold: 0.6
+    device: "auto"  # auto, cpu, cuda, openvino, mps
+  
+  object_detection:
+    model_path: "yolov8n.pt"
+    confidence_threshold: 0.5
+
+overlays:
+  lane_polygon:
+    enabled: true
+    color: [0, 255, 0]  # BGR format
+    alpha: 0.3
+    gradient_enabled: true
+  
+  distance_markers:
+    enabled: true
+    intervals: [10, 20, 30, 40, 50]  # meters
+    show_confidence: true
+  
+  bev:
+    enabled: true
+    position: "bottom-right"  # bottom-right, bottom-left, top-right, top-left
+    size: [300, 400]  # width, height
+    alpha: 0.8
+  
+  animations:
+    enabled: true
+    speed: 1.0
+    fade_duration: 0.3  # seconds
+
+camera:
+  calibration_file: null  # path to calibration JSON file
+  resolution: [1920, 1080]
+  fps: 30
+
+performance:
+  target_fps: 15
+  max_latency_ms: 100
+  enable_frame_skip: true
+  enable_performance_mode: false
+
+fallback:
+  enable_cv_fallback: true
+  cv_confidence_threshold: 0.6
+  max_consecutive_dl_failures: 5
+
+fcws:
+  warning_distance: 150.0
+  critical_distance: 80.0
+
+ldws:
+  departure_threshold: 30.0
+
+lkas:
+  assist_threshold: 20.0

@@ -1,0 +1,106 @@
+{
+  "timestamp": "2025-11-16T18:55:56.259190",
+  "summary": {
+    "total_tests": 16,
+    "passed": 16,
+    "failed": 0,
+    "pass_rate": "100%"
+  },
+  "video_properties": {
+    "frame_count": 825,
+    "fps": 29.97002997002997,
+    "width": 1920,
+    "height": 1080,
+    "duration": 27.5275
+  },
+  "video_results": {
+    "processed_frames": 825,
+    "total_frames": 825,
+    "fps": 8.89220915787859,
+    "avg_frame_time": 108.01764719413988,
+    "total_time": 92.77784466743469,
+    "errors": 0
+  },
+  "test_details": [
+    {
+      "test": "All Imports",
+      "status": "PASS",
+      "details": "All critical modules imported successfully"
+    },
+    {
+      "test": "Configuration System",
+      "status": "PASS",
+      "details": "Config keys: 9"
+    },
+    {
+      "test": "Hardware Detection",
+      "status": "PASS",
+      "details": "Device: cpu"
+    },
+    {
+      "test": "Distance Estimation",
+      "status": "PASS",
+      "details": "Estimator initialized"
+    },
+    {
+      "test": "Animation Engine",
+      "status": "PASS",
+      "details": "Engine initialized and updated"
+    },
+    {
+      "test": "ADAS Initialization",
+      "status": "PASS",
+      "details": "System ready"
+    },
+    {
+      "test": "Frame Processing",
+      "status": "PASS",
+      "details": "Time: 163.96ms"
+    },
+    {
+      "test": "Batch Processing",
+      "status": "PASS",
+      "details": "FPS: 11.74, Avg: 85.20ms"
+    },
+    {
+      "test": "System Status",
+      "status": "PASS",
+      "details": "All subsystems reporting"
+    },
+    {
+      "test": "Performance Metrics",
+      "status": "PASS",
+      "details": "FPS: 11.42"
+    },
+    {
+      "test": "Video File Exists",
+      "status": "PASS",
+      "details": "Size: 19.41 MB"
+    },
+    {
+      "test": "Video Properties",
+      "status": "PASS",
+      "details": "Frames: 825, FPS: 30.0, Resolution: 1920x1080, Duration: 27.5s"
+    },
+    {
+      "test": "Video Processing",
+      "status": "PASS",
+      "details": "Processed: 825/825, FPS: 8.89, Avg Time: 108.02ms, Errors: 0"
+    },
+    {
+      "test": "Video Output",
+      "status": "PASS",
+      "details": "Generated: test_video_output.mp4 (13.48 MB, 100 frames)"
+    },
+    {
+      "test": "Memory Stability",
+      "status": "PASS",
+      "details": "Initial: 304.5MB, Final: 302.8MB, Increase: -1.8MB"
+    },
+    {
+      "test": "Error Recovery",
+      "status": "PASS",
+      "details": "Recovered from 0 errors, system still operational"
+    }
+  ]
+}

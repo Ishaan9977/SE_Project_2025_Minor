@@ -1,0 +1,24 @@
+{
+  "camera_matrix": [
+    [1000.0, 0.0, 960.0],
+    [0.0, 1000.0, 540.0],
+    [0.0, 0.0, 1.0]
+  ],
+  "dist_coeffs": [
+    -0.2,
+    0.05,
+    0.0,
+    0.0,
+    0.0
+  ],
+  "image_size": [1920, 1080],
+  "object_heights": {
+    "car": 1.5,
+    "truck": 3.0,
+    "bus": 3.2,
+    "motorcycle": 1.2,
+    "bicycle": 1.7,
+    "person": 1.7
+  },
+  "notes": "Sample calibration file. Replace with actual camera calibration data."
+}
