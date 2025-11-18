@@ -12,7 +12,13 @@
 
 Watch the ADAS system in action processing real-world driving scenarios:
 
-https://github.com/user-attachments/assets/output_video.mp4
+<div align="center">
+
+![ADAS System Demo](demo_output/output_video.gif)
+
+**[📹 Full Video (MP4)](demo_output/output_video.mp4)** | **[📊 Performance Report](demo_output/processing_report.txt)**
+
+</div>
 
 > **Demo Video**: Complete demonstration showing real-time lane detection, forward collision warning, lane departure alerts, and lane keeping assistance working simultaneously. The video showcases the system processing 825 frames with an average of 2.79 detections per frame, achieving 85.8% safe driving conditions with timely warnings for potential hazards.
 
@@ -599,6 +605,6 @@ For questions, issues, or contributions, please refer to the project documentati
 
 ---
 
-**Last Updated**: November 2024  
+**Last Updated**: November 2025  
 **Version**: 1.0.0  
 **Status**: ✅ Production Ready
