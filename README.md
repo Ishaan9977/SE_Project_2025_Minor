@@ -229,8 +229,8 @@ The system follows a modular architecture with clear separation of concerns:
 ### Step 1: Clone Repository
 
 ```bash
-git clone <repository-url>
-cd ADAS_Project
+git clone https://github.com/Ishaan9977/SE_Project_2025_Minor
+cd SE_Project_2025_Minor
 ```
 
 ### Step 2: Install Dependencies
