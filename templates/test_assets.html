@@ -1,0 +1,44 @@
+<!DOCTYPE html>
+<html>
+<head>
+    <title>Asset Test</title>
+    <style>
+        body {
+            background: url('/assets/background.jpg') center center / cover no-repeat;
+            min-height: 100vh;
+            display: flex;
+            flex-direction: column;
+            align-items: center;
+            justify-content: center;
+            gap: 20px;
+        }
+        .test-container {
+            background: rgba(255, 255, 255, 0.9);
+            padding: 40px;
+            border-radius: 20px;
+        }
+        img {
+            max-width: 200px;
+            margin: 10px;
+        }
+    </style>
+</head>
+<body>
+    <div class="test-container">
+        <h1>Asset Loading Test</h1>
+        
+        <h2>Steering Wheel:</h2>
+        <img src="/assets/steering_wheel.png" alt="Steering Wheel">
+        
+        <h2>Directional Arrows:</h2>
+        <img src="/assets/left.png" alt="Left">
+        <img src="/assets/right.png" alt="Right">
+        <img src="/assets/up.png" alt="Up">
+        
+        <h2>Background Test:</h2>
+        <p>If you see a background image, it's working!</p>
+        
+        <a href="/">Back to Dashboard</a>
+    </div>
+</body>
+</html>

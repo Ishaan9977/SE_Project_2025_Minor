@@ -90,6 +90,9 @@ class EnhancedADASSystem(ADASSystem):
         bev_size = tuple(self.config.get('overlays.bev.size', [300, 400]))
         self.bev_transformer = BirdEyeViewTransformer(output_size=bev_size)
         
+        # Current state tracking
+        self.current_vehicle_offset = 0
+        
         # Performance tracking
         self.performance_stats = {
             'total_frames': 0,
@@ -169,6 +172,9 @@ class EnhancedADASSystem(ADASSystem):
             lane_center, vehicle_offset = self.lane_detector.calculate_lane_center(
                 left_lane, right_lane, width, height
             )
+            
+            # Store for status reporting
+            self.current_vehicle_offset = vehicle_offset if vehicle_offset is not None else 0
             
             # 4. Enhanced FCWS with distance estimation
             fcws_state, risky_detections = self.enhanced_fcws.check_collision_risk(detections, frame)
@@ -347,9 +353,18 @@ class EnhancedADASSystem(ADASSystem):
     def get_system_status(self) -> Dict[str, Any]:
         """Get complete system status"""
         return {
-            'fcws': self.enhanced_fcws.get_statistics(),
-            'ldws': {'state': self.ldws.warning_state},
-            'lkas': {'active': self.lkas.assist_active},
+            'fcws': {
+                'warning_state': self.fcws.warning_state,
+                'statistics': self.enhanced_fcws.get_statistics()
+            },
+            'ldws': {
+                'state': self.ldws.warning_state,
+                'lane_offset': self.current_vehicle_offset
+            },
+            'lkas': {
+                'active': self.lkas.assist_active,
+                'steering_angle': self.lkas.steering_angle
+            },
             'lane_detection': {
                 'dl_enabled': self.hybrid_lane_detector.dl_enabled,
                 'stats': self.hybrid_lane_detector.get_statistics()

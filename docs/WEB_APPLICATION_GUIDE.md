@@ -1,29 +1,34 @@
-"""
-Enhanced Flask Web Application for ADAS System
-Modern, interactive UI with real-time monitoring and controls
-"""
+# Web Application - Complete Guide
 
-import cv2
-import os
-import threading
-import time
-import logging
-from datetime import datetime
+## 7. WEB APPLICATION
+
+### 7.1 app.py - Flask Server
+
+**Purpose**: Web server providing HTTP API and video streaming
+
+**Architecture**:
+```
+Browser (Client)
+    ↓ HTTP Requests
+Flask Server (app.py)
+    ↓ Process Frames
+EnhancedADASSystem
+    ↓ MJPEG Stream
+Browser (Client)
+```
+
+**Key Code**:
+```python
 from flask import Flask, render_template, Response, jsonify, request, send_from_directory
 from werkzeug.utils import secure_filename
-from enhanced_adas_system import EnhancedADASSystem
-from utils.config_loader import ConfigLoader
-
-# Configure logging
-logging.basicConfig(level=logging.INFO)
-logger = logging.getLogger(__name__)
+import cv2
+import threading
+import time
 
 app = Flask(__name__)
 app.config['UPLOAD_FOLDER'] = 'uploads'
 app.config['MAX_CONTENT_LENGTH'] = 500 * 1024 * 1024  # 500MB
 app.config['SECRET_KEY'] = 'adas-enhanced-secret-key'
-
-ALLOWED_EXTENSIONS = {'mp4', 'avi', 'mov', 'mkv', 'webm'}
 
 # Global variables
 enhanced_adas = None
@@ -31,7 +36,6 @@ video_capture = None
 current_video_path = None
 processing_active = False
 frame_lock = threading.Lock()
-config_loader = None
 
 # Processing statistics
 processing_stats = {
@@ -46,26 +50,32 @@ processing_stats = {
     'warnings': 0,
     'critical_alerts': 0
 }
+```
 
-
-def allowed_file(filename):
-    """Check if file extension is allowed"""
-    return '.' in filename and filename.rsplit('.', 1)[1].lower() in ALLOWED_EXTENSIONS
-
-
+**Initialization**:
+```python
 def init_enhanced_adas():
     """Initialize Enhanced ADAS System"""
     global enhanced_adas, config_loader
     if enhanced_adas is None:
         logger.info("Initializing Enhanced ADAS System...")
         config_loader = ConfigLoader()
-        enhanced_adas = EnhancedADASSystem(yolo_model='yolov8n.pt', conf_threshold=0.5)
+        enhanced_adas = EnhancedADASSystem(
+            yolo_model='yolov8n.pt',
+            conf_threshold=0.5
+        )
         logger.info("Enhanced ADAS System initialized!")
     return enhanced_adas
+```
 
-
+**Frame Generation (MJPEG Streaming)**:
+```python
 def generate_frames():
-    """Generate video frames with ADAS processing"""
+    """
+    Generate video frames with ADAS processing
+    
+    Yields MJPEG frames for streaming to browser
+    """
     global video_capture, processing_active, enhanced_adas, processing_stats
     
     if enhanced_adas is None:
@@ -81,6 +91,7 @@ def generate_frames():
                     time.sleep(0.1)
                     continue
                 
+                # Read frame
                 ret, frame = video_capture.read()
                 if not ret:
                     if current_video_path:
@@ -91,18 +102,19 @@ def generate_frames():
                             time.sleep(0.1)
                             continue
                     else:
+                        # Webcam - wait for next frame
                         time.sleep(0.033)
                         continue
                 
-                # Process frame with enhanced ADAS
+                # Process frame with ADAS
                 try:
                     processed_frame = enhanced_adas.process_frame(frame)
                     
                     # Update statistics from system status
                     system_status = enhanced_adas.get_system_status()
-                    if system_status.get('fcws_state') == 'WARNING':
+                    if system_status.get('fcws', {}).get('warning_state') == 'WARNING':
                         processing_stats['warnings'] += 1
-                    elif system_status.get('fcws_state') == 'CRITICAL':
+                    elif system_status.get('fcws', {}).get('warning_state') == 'CRITICAL':
                         processing_stats['critical_alerts'] += 1
                     
                 except Exception as e:
@@ -113,18 +125,22 @@ def generate_frames():
                 processing_stats['processed_frames'] += 1
                 elapsed = time.time() - processing_stats['start_time']
                 if elapsed > 0:
-                    processing_stats['current_fps'] = processing_stats['processed_frames'] / elapsed
+                    processing_stats['current_fps'] = (
+                        processing_stats['processed_frames'] / elapsed
+                    )
                 
-                # Encode frame
-                ret, buffer = cv2.imencode('.jpg', processed_frame, [cv2.IMWRITE_JPEG_QUALITY, 85])
+                # Encode frame as JPEG
+                ret, buffer = cv2.imencode('.jpg', processed_frame, 
+                                          [cv2.IMWRITE_JPEG_QUALITY, 85])
                 if not ret:
                     continue
                 
                 frame_bytes = buffer.tobytes()
                 
-                # Yield frame
+                # Yield frame in MJPEG format
                 yield (b'--frame\r\n'
-                       b'Content-Type: image/jpeg\r\n\r\n' + frame_bytes + b'\r\n')
+                       b'Content-Type: image/jpeg\r\n\r\n' + 
+                       frame_bytes + b'\r\n')
         
         except Exception as e:
             logger.error(f"Error in frame generation: {e}")
@@ -134,69 +150,34 @@ def generate_frames():
             continue
         
         time.sleep(0.033)  # ~30 FPS
+```
 
-
-# ============================================================================
-# ROUTES - Main Pages
-# ============================================================================
-
+**Routes - Main Pages**:
+```python
 @app.route('/')
 def index():
     """Main dashboard page"""
     return render_template('dashboard.html')
 
-
-@app.route('/test-assets')
-def test_assets():
-    """Test page to verify assets are loading"""
-    return render_template('test_assets.html')
-
-
-@app.route('/api/debug/assets')
-def debug_assets():
-    """Debug endpoint to check asset availability"""
-    import os
-    assets_dir = 'assets'
-    assets_info = {}
-    
-    if os.path.exists(assets_dir):
-        for filename in os.listdir(assets_dir):
-            filepath = os.path.join(assets_dir, filename)
-            assets_info[filename] = {
-                'exists': True,
-                'size': os.path.getsize(filepath),
-                'url': f'/assets/{filename}'
-            }
-    
-    return jsonify({
-        'status': 'success',
-        'assets_directory': os.path.abspath(assets_dir),
-        'assets': assets_info
-    })
-
-
 @app.route('/video_feed')
 def video_feed():
-    """Video streaming route"""
+    """Video streaming route - MJPEG stream"""
     return Response(generate_frames(),
                    mimetype='multipart/x-mixed-replace; boundary=frame')
 
-
 @app.route('/assets/<path:filename>')
 def serve_assets(filename):
-    """Serve asset files (images, etc.)"""
+    """Serve static assets (images, etc.)"""
     try:
         logger.info(f"Serving asset: {filename}")
         return send_from_directory('assets', filename)
     except Exception as e:
         logger.error(f"Error serving asset {filename}: {e}")
         return jsonify({'error': str(e)}), 404
+```
 
-
-# ============================================================================
-# ROUTES - Video Control
-# ============================================================================
-
+**Routes - Video Control**:
+```python
 @app.route('/api/video/start_webcam', methods=['POST'])
 def start_webcam():
     """Start webcam streaming"""
@@ -218,7 +199,10 @@ def start_webcam():
             
             if not video_capture.isOpened():
                 logger.error("Failed to open webcam")
-                return jsonify({'status': 'error', 'message': 'Failed to open webcam'}), 500
+                return jsonify({
+                    'status': 'error',
+                    'message': 'Failed to open webcam'
+                }), 500
             
             # Set webcam properties
             video_capture.set(cv2.CAP_PROP_FRAME_WIDTH, 1280)
@@ -231,10 +215,14 @@ def start_webcam():
                 video_capture.release()
                 video_capture = None
                 logger.error("Failed to read from webcam")
-                return jsonify({'status': 'error', 'message': 'Failed to read from webcam'}), 500
+                return jsonify({
+                    'status': 'error',
+                    'message': 'Failed to read from webcam'
+                }), 500
             
             current_video_path = None
         
+        # Reset statistics
         processing_stats['start_time'] = time.time()
         processing_stats['processed_frames'] = 0
         processing_stats['warnings'] = 0
@@ -243,12 +231,17 @@ def start_webcam():
         processing_active = True
         
         logger.info("Webcam started successfully")
-        return jsonify({'status': 'success', 'message': 'Webcam started successfully'})
+        return jsonify({
+            'status': 'success',
+            'message': 'Webcam started successfully'
+        })
     
     except Exception as e:
         logger.error(f"Webcam error: {e}")
-        return jsonify({'status': 'error', 'message': f'Webcam error: {str(e)}'}), 500
-
+        return jsonify({
+            'status': 'error',
+            'message': f'Webcam error: {str(e)}'
+        }), 500
 
 @app.route('/api/video/upload', methods=['POST'])
 def upload_video():
@@ -259,13 +252,17 @@ def upload_video():
         logger.info("Video upload request received")
         
         if 'video' not in request.files:
-            logger.error("No video file in request")
-            return jsonify({'status': 'error', 'message': 'No video file provided'}), 400
+            return jsonify({
+                'status': 'error',
+                'message': 'No video file provided'
+            }), 400
         
         file = request.files['video']
         if file.filename == '':
-            logger.error("Empty filename")
-            return jsonify({'status': 'error', 'message': 'No file selected'}), 400
+            return jsonify({
+                'status': 'error',
+                'message': 'No file selected'
+            }), 400
         
         if file and allowed_file(file.filename):
             # Stop any existing stream
@@ -281,11 +278,10 @@ def upload_video():
             
             # Verify file was saved
             if not os.path.exists(filepath):
-                logger.error(f"File not saved: {filepath}")
-                return jsonify({'status': 'error', 'message': 'Failed to save video file'}), 500
-            
-            file_size = os.path.getsize(filepath)
-            logger.info(f"File saved successfully. Size: {file_size} bytes")
+                return jsonify({
+                    'status': 'error',
+                    'message': 'Failed to save video file'
+                }), 500
             
             with frame_lock:
                 if video_capture is not None:
@@ -294,18 +290,20 @@ def upload_video():
                 # Try to open the video
                 video_capture = cv2.VideoCapture(filepath)
                 if not video_capture.isOpened():
-                    logger.error(f"Failed to open video file: {filepath}")
-                    return jsonify({'status': 'error', 'message': 'Failed to open video file'}), 500
+                    return jsonify({
+                        'status': 'error',
+                        'message': 'Failed to open video file'
+                    }), 500
                 
                 # Get video properties
                 frame_count = int(video_capture.get(cv2.CAP_PROP_FRAME_COUNT))
                 fps = video_capture.get(cv2.CAP_PROP_FPS)
                 width = int(video_capture.get(cv2.CAP_PROP_FRAME_WIDTH))
                 height = int(video_capture.get(cv2.CAP_PROP_FRAME_HEIGHT))
-                logger.info(f"Video properties - Frames: {frame_count}, FPS: {fps}, Size: {width}x{height}")
                 
                 current_video_path = filepath
             
+            # Reset statistics
             processing_stats['start_time'] = time.time()
             processing_stats['processed_frames'] = 0
             processing_stats['warnings'] = 0
@@ -324,13 +322,17 @@ def upload_video():
                 'resolution': f'{width}x{height}'
             })
         else:
-            logger.error(f"Invalid file type: {file.filename}")
-            return jsonify({'status': 'error', 'message': 'Invalid file type. Supported: MP4, AVI, MOV, MKV, WEBM'}), 400
+            return jsonify({
+                'status': 'error',
+                'message': 'Invalid file type. Supported: MP4, AVI, MOV, MKV, WEBM'
+            }), 400
     
     except Exception as e:
         logger.error(f"Upload error: {e}")
-        return jsonify({'status': 'error', 'message': f'Upload error: {str(e)}'}), 500
-
+        return jsonify({
+            'status': 'error',
+            'message': f'Upload error: {str(e)}'
+        }), 500
 
 @app.route('/api/video/stop', methods=['POST'])
 def stop_video():
@@ -350,16 +352,20 @@ def stop_video():
         current_video_path = None
         processing_stats['source'] = 'idle'
         logger.info("Video stream stopped")
-        return jsonify({'status': 'success', 'message': 'Streaming stopped'})
+        return jsonify({
+            'status': 'success',
+            'message': 'Streaming stopped'
+        })
     except Exception as e:
         logger.error(f"Error stopping video: {e}")
-        return jsonify({'status': 'error', 'message': str(e)}), 500
+        return jsonify({
+            'status': 'error',
+            'message': str(e)
+        }), 500
+```
 
-
-# ============================================================================
-# ROUTES - Status and Metrics
-# ============================================================================
-
+**Routes - Status and Metrics**:
+```python
 @app.route('/api/status', methods=['GET'])
 def get_status():
     """Get current system status"""
@@ -368,7 +374,10 @@ def get_status():
     try:
         status_info = {
             'processing': processing_active,
-            'video_loaded': video_capture is not None and video_capture.isOpened() if video_capture else False,
+            'video_loaded': (
+                video_capture is not None and 
+                video_capture.isOpened() if video_capture else False
+            ),
             'adas_initialized': enhanced_adas is not None,
             'processing_stats': processing_stats
         }
@@ -380,7 +389,6 @@ def get_status():
         return jsonify({'status': 'success', 'data': status_info})
     except Exception as e:
         return jsonify({'status': 'error', 'message': str(e)}), 500
-
 
 @app.route('/api/metrics', methods=['GET'])
 def get_metrics():
@@ -407,78 +415,10 @@ def get_metrics():
         })
     except Exception as e:
         return jsonify({'status': 'error', 'message': str(e)}), 500
+```
 
-
-@app.route('/api/config', methods=['GET'])
-def get_config():
-    """Get current configuration"""
-    global config_loader
-    
-    try:
-        if config_loader is None:
-            config_loader = ConfigLoader()
-        
-        return jsonify({
-            'status': 'success',
-            'config': config_loader.config
-        })
-    except Exception as e:
-        return jsonify({'status': 'error', 'message': str(e)}), 500
-
-
-@app.route('/api/config/update', methods=['POST'])
-def update_config():
-    """Update configuration"""
-    global config_loader, enhanced_adas
-    
-    try:
-        data = request.get_json()
-        
-        if not data:
-            return jsonify({'status': 'error', 'message': 'No data provided'}), 400
-        
-        # Update configuration
-        if config_loader is None:
-            config_loader = ConfigLoader()
-        
-        config_loader.update_from_dict(data)
-        config_loader.save()
-        
-        # Apply changes to ADAS system if initialized
-        if enhanced_adas is not None:
-            if 'models.object_detection.confidence_threshold' in data:
-                enhanced_adas.object_detector.conf_threshold = data['models.object_detection.confidence_threshold']
-        
-        return jsonify({
-            'status': 'success',
-            'message': 'Configuration updated',
-            'updated_keys': list(data.keys())
-        })
-    
-    except Exception as e:
-        return jsonify({'status': 'error', 'message': str(e)}), 500
-
-
-# ============================================================================
-# Error Handlers
-# ============================================================================
-
-@app.errorhandler(404)
-def not_found(error):
-    """Handle 404 errors"""
-    return jsonify({'status': 'error', 'message': 'Not found'}), 404
-
-
-@app.errorhandler(500)
-def internal_error(error):
-    """Handle 500 errors"""
-    return jsonify({'status': 'error', 'message': 'Internal server error'}), 500
-
-
-# ============================================================================
-# Initialization
-# ============================================================================
-
+**Main Entry Point**:
+```python
 if __name__ == '__main__':
     # Create necessary directories
     os.makedirs(app.config['UPLOAD_FOLDER'], exist_ok=True)
@@ -494,3 +434,34 @@ if __name__ == '__main__':
     
     # Run Flask app
     app.run(host='0.0.0.0', port=5000, debug=False, threaded=True)
+```
+
+---
+
+### 7.2 Key Concepts
+
+**MJPEG Streaming**:
+- Multipart JPEG stream
+- Each frame is a separate JPEG image
+- Boundary marker separates frames
+- Browser displays as continuous video
+
+**Threading**:
+- `frame_lock` prevents race conditions
+- Multiple threads access `video_capture`
+- Ensures thread-safe frame reading
+
+**Global State**:
+- `processing_active`: Controls frame generation loop
+- `video_capture`: OpenCV VideoCapture object
+- `enhanced_adas`: ADAS system instance
+- `processing_stats`: Performance metrics
+
+**Error Handling**:
+- Try-except blocks around critical operations
+- Graceful degradation on errors
+- Logging for debugging
+- User-friendly error messages
+
+---
+
